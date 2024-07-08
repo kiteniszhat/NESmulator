@@ -72,7 +72,7 @@ private:
     uint8_t fetched = 0x00;
     uint16_t temp = 0x0000; // A convenience variable used everywhere
     uint16_t address_abs = 0x0000; // All used memory addresses end up in here
-    uint16_t address_rel = 0x0000; // Represents absolute address following a branch
+    uint16_t address_rel = 0x00; // Represents absolute address following a branch
     uint8_t opcode = 0x00; // Is the instruction byte
     uint8_t cycles = 0;
     uint32_t clock_count = 0;

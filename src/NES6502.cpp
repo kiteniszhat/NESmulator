@@ -47,19 +47,31 @@ void NES6502::clk()
     cycles --;
 }
 
-uint8_t NES6502::IMP()
+uint8_t NES6502::getFlag(NES6502::FLAGS6502 flag)
+{
+    if ((status & flag) > 0) return 1;
+    else return 0;
+}
+
+void NES6502::setFlag(NES6502::FLAGS6502 flag, bool value)
+{
+    if (value) status |= flag;
+    else status &= ~flag;
+}
+
+uint8_t NES6502::IMP() // Implied
 {
     fetched = A;
     return 0;
 }
 
-uint8_t NES6502::IMM()
+uint8_t NES6502::IMM() // Immediate
 {
     address_abs = pc ++;
     return 0;
 }
 
-uint8_t NES6502::ZP0()
+uint8_t NES6502::ZP0() // Zero Page
 {
     address_abs = readByte(pc);
     pc ++;
@@ -67,7 +79,7 @@ uint8_t NES6502::ZP0()
     return 0;
 }
 
-uint8_t NES6502::ZPX()
+uint8_t NES6502::ZPX() // Zero Page with X Offset
 {
     address_abs = readByte(pc ) + X;
     pc ++;
@@ -75,7 +87,7 @@ uint8_t NES6502::ZPX()
     return 0;
 }
 
-uint8_t NES6502::ZPY()
+uint8_t NES6502::ZPY() // Zero Page with Y Offset
 {
     address_abs = readByte(pc ) + Y;
     pc ++;
@@ -83,7 +95,97 @@ uint8_t NES6502::ZPY()
     return 0;
 }
 
-uint8_t NES6502::REL()
+uint8_t NES6502::REL() // Relative
 {
+    address_rel = readByte(pc);
+    pc ++;
+    if (address_rel & 0x80) address_rel |= 0xFF00;
     return 0;
+}
+
+uint8_t NES6502::ABS() // Absolute
+{
+    uint16_t lowByte = readByte(pc);
+    pc ++;
+    uint16_t highByte = readByte(pc );
+    pc ++;
+    address_abs = (highByte << 8) | lowByte;
+    return 0;
+}
+
+uint8_t NES6502::ABX() // Absolute with X Offset
+{
+    uint16_t lowByte = readByte(pc);
+    pc ++;
+    uint16_t highByte = readByte(pc);
+    pc ++;
+    address_abs = (highByte << 8) | lowByte;
+    address_abs += X;
+    if ((address_abs & 0xFF00) != (highByte << 8)) return 1;
+    else return 0;
+}
+
+uint8_t NES6502::ABY() // Absolute with Y Offset
+{
+    uint16_t lowByte = readByte(pc);
+    pc ++;
+    uint16_t highByte = readByte(pc);
+    pc ++;
+    address_abs = (highByte << 8) | lowByte;
+    address_abs += Y;
+    if ((address_abs & 0xFF00) != (highByte << 8)) return 1;
+    else return 0;
+}
+
+uint8_t NES6502::IND() // Indirect
+{
+    uint8_t ptr_lowByte = readByte(pc);
+    pc ++;
+    uint8_t ptr_highByte = readByte(pc);
+    pc ++;
+    uint8_t ptr = (ptr_highByte << 8) | ptr_lowByte;
+    if (ptr_lowByte == 0x00FF) // Hardware bug
+        address_abs = (readByte(ptr & 0xFF00) << 8) | readByte(ptr + 0);
+    else
+        address_abs = (readByte(ptr + 1) << 8) | readByte(ptr + 0);
+    return 0;
+}
+
+uint8_t NES6502::IZX() // Indirect X
+{
+    uint16_t tmp = readByte(pc);
+    pc ++;
+    uint16_t zero_page_addr = (tmp + X) & 0x00FF;
+    uint16_t lo = readByte(zero_page_addr);
+    uint16_t hi = readByte((zero_page_addr + 1) & 0x00FF);
+    address_abs = (hi << 8) | lo;
+    return 0;
+}
+
+uint8_t NES6502::IZY() // Indirect Y
+{
+    uint16_t tmp = readByte(pc);
+    pc ++;
+    uint16_t lowByte = readByte(tmp & 0x00FF);
+    uint16_t highByte = readByte((tmp + 1) & 0x00FF);
+    address_abs = (highByte << 8) | lowByte;
+    address_abs += Y;
+    if ((address_abs & 0xFF00) != (highByte << 8)) return 1;
+    else return 0;
+}
+
+uint8_t NES6502::fetch()
+{
+    if (instructions[opcode].addressing_mode != &NES6502::IMP)
+        fetched = readByte(address_abs);
+    return fetched;
+}
+
+uint8_t NES6502::AND()
+{
+    fetch();
+    A &= fetched;
+    setFlag(Z, A == 0x00);
+    setFlag(N, A & 0x00);
+    return 1;
 }
