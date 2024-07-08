@@ -33,3 +33,57 @@ uint8_t NES6502::readByte(uint16_t address) {
 void NES6502::writeByte(uint16_t address, uint8_t data) {
     bus -> writeByte(address, data);
 }
+
+void NES6502::clk()
+{
+    if (cycles == 0) {
+        opcode = readByte(pc);
+        pc ++;
+        cycles = instructions[opcode].cycles;
+        uint8_t additional_cycle1 = (this -> *instructions[opcode].addressing_mode)();
+        uint8_t additional_cycle2 = (this -> *instructions[opcode].operate)();
+        cycles += additional_cycle1 & additional_cycle2;
+    }
+    cycles --;
+}
+
+uint8_t NES6502::IMP()
+{
+    fetched = A;
+    return 0;
+}
+
+uint8_t NES6502::IMM()
+{
+    address_abs = pc ++;
+    return 0;
+}
+
+uint8_t NES6502::ZP0()
+{
+    address_abs = readByte(pc);
+    pc ++;
+    address_abs &= 0x00FF;
+    return 0;
+}
+
+uint8_t NES6502::ZPX()
+{
+    address_abs = readByte(pc ) + X;
+    pc ++;
+    address_abs &= 0x00FF;
+    return 0;
+}
+
+uint8_t NES6502::ZPY()
+{
+    address_abs = readByte(pc ) + Y;
+    pc ++;
+    address_abs &= 0x00FF;
+    return 0;
+}
+
+uint8_t NES6502::REL()
+{
+    return 0;
+}

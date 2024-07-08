@@ -88,7 +88,7 @@ private:
     struct INSTRUCTION
     {
         std::string name;
-        uint8_t(NES6502::*opperate)() = nullptr;
+        uint8_t(NES6502::*operate)() = nullptr;
         uint8_t(NES6502::*addressing_mode)() = nullptr;
         uint8_t cycles = 0;
     };
