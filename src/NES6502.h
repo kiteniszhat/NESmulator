@@ -2,6 +2,8 @@
 #define NESMULATOR_NES6502_H
 
 
+#include <string>
+#include <vector>
 #include "Bus.h"
 
 class NES6502
@@ -10,7 +12,7 @@ public:
     NES6502();
     ~NES6502();
 
-    enum FLAGS_6502
+    enum FLAGS6502
     {
         C = (1 << 0), // Carry Bit
         Z = (1 << 1), // Zero
@@ -33,6 +35,7 @@ public:
         bus = _bus;
     }
 
+private:
     // Addressing modes
     uint8_t IMP(); uint8_t IMM();
     uint8_t ZP0(); uint8_t ZPX();
@@ -62,19 +65,35 @@ public:
 
     void clk();
     void rst();
-    void irq(); // Interrupt request
-    void nmi(); // Non-maskable interrupt
+    void irq(); // Interrupt request - executes an instruction at a specific location
+    void nmi(); // Non-maskable interrupt - as above, but cannot be disabled
 
     uint8_t fetch();
     uint8_t fetched = 0x00;
+    uint16_t temp = 0x0000; // A convenience variable used everywhere
+    uint16_t address_abs = 0x0000; // All used memory addresses end up in here
+    uint16_t address_rel = 0x0000; // Represents absolute address following a branch
+    uint8_t opcode = 0x00; // Is the instruction byte
+    uint8_t cycles = 0;
+    uint32_t clock_count = 0;
 
 private:
     Bus *bus = nullptr;
     uint8_t readByte(uint16_t address);
     void writeByte(uint16_t address, uint8_t data);
 
-    uint8_t getFlag(FLAGS_6502 flag);
-    void setFlag(FLAGS_6502 flag, bool value);
+    uint8_t getFlag(FLAGS6502 flag);
+    void setFlag(FLAGS6502 flag, bool value);
+
+    struct INSTRUCTION
+    {
+        std::string name;
+        uint8_t(NES6502::*opperate)() = nullptr;
+        uint8_t(NES6502::*addressing_mode)() = nullptr;
+        uint8_t cycles = 0;
+    };
+
+    std::vector<INSTRUCTION> instructions;
 };
 
 
