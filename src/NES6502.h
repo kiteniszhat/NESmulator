@@ -1,14 +1,14 @@
-#ifndef NESMULATOR_OLC6502_H
-#define NESMULATOR_OLC6502_H
+#ifndef NESMULATOR_NES6502_H
+#define NESMULATOR_NES6502_H
 
 
 #include "Bus.h"
 
-class olc6502
+class NES6502
 {
 public:
-    olc6502();
-    ~olc6502();
+    NES6502();
+    ~NES6502();
 
     enum FLAGS_6502
     {
@@ -17,7 +17,7 @@ public:
         I = (1 << 2), // Disable Interrupts
         D = (1 << 3), // Decimal Mode
         B = (1 << 4), // Break
-        U = (1 << 5), // Unused :c
+        U = (1 << 5), // Unused :c (originally described as 1)
         V = (1 << 6), // Overflow
         N = (1 << 7), // Negative
     };
@@ -62,8 +62,8 @@ public:
 
     void clk();
     void rst();
-    void irq();
-    void nmi();
+    void irq(); // Interrupt request
+    void nmi(); // Non-maskable interrupt
 
     uint8_t fetch();
     uint8_t fetched = 0x00;
@@ -78,4 +78,4 @@ private:
 };
 
 
-#endif //NESMULATOR_OLC6502_H
+#endif //NESMULATOR_NES6502_H

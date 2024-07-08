@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <array>
-#include "olc6502.h"
+#include "NES6502.h"
 
 class Bus
 {
@@ -12,7 +12,7 @@ public:
     ~Bus();
 
     // Devices on bus
-    olc6502 CPU;
+    NES6502 CPU;
     std::array<uint8_t, 64 * 1024> RAM; // Fake RAM for a moment
 
     // Bus read and write
