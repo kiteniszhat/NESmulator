@@ -181,11 +181,46 @@ uint8_t NES6502::fetch()
     return fetched;
 }
 
-uint8_t NES6502::AND()
+uint8_t NES6502::ADC() // Add with Carry In
+{
+    fetch();
+    temp = (uint16_t)A + (uint16_t)fetched + (uint16_t)getFlag(C);
+    setFlag(C, temp > 255);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(V, (~((uint16_t)A ^ (uint16_t)fetched) & ((uint16_t)A ^ (uint16_t)temp)) & 0x0080);
+    setFlag(N, temp & 0x80);
+}
+
+uint8_t NES6502::ASL() // Arithmetic Shift Left
+{
+    fetch();
+    temp = (uint16_t)fetched << 1;
+    setFlag(C, (temp & 0xFF00) > 0);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x80);
+    if (instructions[opcode].addressing_mode == &NES6502::IMP)
+        A = temp & 0x00FF;
+    else
+        writeByte(address_abs, temp & 0x00FF);
+    return 0;
+}
+
+uint8_t NES6502::AND() // Logic AND
 {
     fetch();
     A &= fetched;
-    setFlag(Z, A == 0x00);
+    setFlag(Z, A == 0);
     setFlag(N, A & 0x00);
     return 1;
+}
+
+uint8_t NES6502::BCS()
+{
+    if (getFlag(C) == 1) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
 }
