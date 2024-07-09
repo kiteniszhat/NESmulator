@@ -24,12 +24,12 @@ public:
         N = (1 << 7), // Negative
     };
 
-    uint8_t A = 0x00;       // Accumulator
-    uint8_t X = 0x00;       // X register
-    uint8_t Y = 0x00;       // Y register
-    uint8_t stkp = 0x00;    // Stack pointer
-    uint8_t pc = 0x0000;    // Program counter
-    uint8_t status = 0x0000;// Status Register
+    uint8_t A = 0x00;        // Accumulator
+    uint8_t X = 0x00;        // X register
+    uint8_t Y = 0x00;        // Y register
+    uint8_t stkp = 0x00;     // Stack pointer
+    uint8_t pc = 0x0000;     // Program counter
+    uint8_t status = 0x0000; // Status Register
 
     void connectBus(Bus *_bus) {
         bus = _bus;
@@ -77,7 +77,6 @@ private:
     uint8_t cycles = 0;
     uint32_t clock_count = 0;
 
-private:
     Bus *bus = nullptr;
     uint8_t readByte(uint16_t address);
     void writeByte(uint16_t address, uint8_t data);

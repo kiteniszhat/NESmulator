@@ -181,7 +181,7 @@ uint8_t NES6502::fetch()
     return fetched;
 }
 
-uint8_t NES6502::ADC() // Add with Carry In
+uint8_t NES6502::ADC() // Add Memory to Accumulator with Carry
 {
     fetch();
     temp = (uint16_t)A + (uint16_t)fetched + (uint16_t)getFlag(C);
@@ -189,6 +189,15 @@ uint8_t NES6502::ADC() // Add with Carry In
     setFlag(Z, (temp & 0x00FF) == 0);
     setFlag(V, (~((uint16_t)A ^ (uint16_t)fetched) & ((uint16_t)A ^ (uint16_t)temp)) & 0x0080);
     setFlag(N, temp & 0x80);
+}
+
+uint8_t NES6502::AND() // Logic AND
+{
+    fetch();
+    A &= fetched;
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x00);
+    return 1;
 }
 
 uint8_t NES6502::ASL() // Arithmetic Shift Left
@@ -205,16 +214,18 @@ uint8_t NES6502::ASL() // Arithmetic Shift Left
     return 0;
 }
 
-uint8_t NES6502::AND() // Logic AND
+uint8_t NES6502::BCC() // Branch on Carry Clear
 {
-    fetch();
-    A &= fetched;
-    setFlag(Z, A == 0);
-    setFlag(N, A & 0x00);
-    return 1;
+    if (getFlag(C) == 0) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
 }
 
-uint8_t NES6502::BCS()
+uint8_t NES6502::BCS() // Branch on Carry Set
 {
     if (getFlag(C) == 1) {
         cycles ++;
@@ -224,3 +235,158 @@ uint8_t NES6502::BCS()
     }
     return 0;
 }
+
+uint8_t NES6502::BEQ() // Branch on Result Zero
+{
+    if (getFlag(Z) == 1) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+}
+
+uint8_t NES6502::BIT() // Test Bits in Memory with Accumulator
+{
+    fetch();
+    temp = fetched & A;
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, fetched & (1 << 7));
+    setFlag(V, fetched & (1 << 6));
+    return 0;
+}
+
+uint8_t NES6502::BMI() // Branch on result Minus
+{
+    if (getFlag(N) == 1) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
+}
+
+uint8_t NES6502::BNE() // Branch on result not Zero
+{
+    if (getFlag(Z) == 0) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
+}
+
+uint8_t NES6502::BPL() // Branch on result Plus
+{
+    if (getFlag(N) == 0) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
+}
+
+uint8_t NES6502::BRK() // Force Break
+{
+    pc ++;
+    setFlag(I, 1);
+    writeByte(0x0100 + stkp, (pc >> 8) & 0x00FF);
+    stkp --;
+    writeByte(0x0100 + stkp, pc & 0x00FF);
+    stkp --;
+    setFlag(B, 1);
+    writeByte(0x0100 + stkp, status);
+    stkp --;
+    setFlag(B, 0);
+    pc = (uint16_t)readByte(0xFFFE) | ((uint16_t)readByte(0xFFFF) << 8);
+    return 0;
+}
+
+uint8_t NES6502::BVC() // Branch on Overflow Clear
+{
+    if (getFlag(V) == 0) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
+}
+
+uint8_t NES6502::BVS() // Branch on Overflow Set
+{
+    if (getFlag(V) == 1) {
+        cycles ++;
+        address_abs = pc + address_rel;
+        if ((address_abs & 0xFF00) != (pc & 0x00FF)) cycles ++;
+        pc = address_abs;
+    }
+    return 0;
+}
+
+uint8_t NES6502::CLC() // Clear Carry Flag
+{
+    setFlag(C, 0);
+    return 0;
+}
+
+uint8_t NES6502::CLD() // Clear Decimal Mode
+{
+    setFlag(D, 0);
+    return 0;
+}
+
+uint8_t NES6502::CLI() // Clear Interrupt Disable Bit
+{
+    setFlag(I, 0);
+    return 0;
+}
+
+uint8_t NES6502::CLV() // Clear Overflow Flag
+{
+    setFlag(V, 0);
+    return 0;
+}
+// TODO: in Compare and DEC 0x80 or 0x0080???
+uint8_t NES6502::CMP() // Compare Memory and Accumulator
+{
+    fetch();
+    temp = (uint16_t)A - (uint16_t)fetched;
+    setFlag(C, A >= fetched);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 1;
+}
+
+uint8_t NES6502::CPX() // Compare Memory and X register
+{
+    fetch();
+    temp = (uint16_t)X - (uint16_t)fetched;
+    setFlag(C, X >= fetched);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t NES6502::CPY() // Compare Memory and Y register
+{
+    fetch();
+    temp = (uint16_t)Y - (uint16_t)fetched;
+    setFlag(C, Y >= fetched);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t NES6502::DEC() // Decrement Memory by One
+{
+    fetch();
+    temp = fetched - 1;
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
