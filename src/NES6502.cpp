@@ -385,8 +385,140 @@ uint8_t NES6502::DEC() // Decrement Memory by One
 {
     fetch();
     temp = fetched - 1;
+    writeByte(address_abs, temp & 0x00FF);
     setFlag(Z, (temp & 0x00FF) == 0);
     setFlag(N, temp & 0x0080);
     return 0;
 }
+
+uint8_t NES6502::DEX() // Decrement X Register
+{
+    X --;
+    setFlag(Z, X == 0);
+    setFlag(N, X & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::DEY() // Decrement Y Register
+{
+    Y --;
+    setFlag(Z, Y == 0);
+    setFlag(N, Y & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::EOR() // Exclusive OR
+{
+    fetch();
+    A = A ^ fetched;
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::INC() // Increment Memory
+{
+    fetch();
+    temp = fetched + 1;
+    writeByte(address_abs, temp & 0x00FF);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t NES6502::INX() // Increment X Register
+{
+    X ++;
+    setFlag(Z, X == 0);
+    setFlag(N, X & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::INY() // Increment Y Register
+{
+    Y ++;
+    setFlag(Z, Y == 0);
+    setFlag(N, Y & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::JMP() // Jump
+{
+    pc = address_abs;
+    return 0;
+}
+
+uint8_t NES6502::JSR() // Jump to Subroutine
+{
+    pc --;
+    writeByte(0x0100 + stkp, (pc >> 8) & 0x00FF);
+    stkp --;
+    writeByte(0x0100 + stkp, pc & 0x00FF);
+    stkp --;
+    pc = address_abs;
+    return 0;
+}
+
+uint8_t NES6502::LDA() // Load Accumulator
+{
+    fetch();
+    A = fetched;
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x80);
+    return 1;
+}
+
+uint8_t NES6502::LDX() // Load X Register
+{
+    fetch();
+    X = fetched;
+    setFlag(Z, X == 0);
+    setFlag(N, X & 0x80);
+    return 1;
+}
+
+uint8_t NES6502::LDY() // Load Y Register
+{
+    fetch();
+    Y = fetched;
+    setFlag(Z, Y == 0);
+    setFlag(N, Y & 0x80);
+    return 1;
+}
+
+uint8_t NES6502::LSR() // Logical Shift Right
+{
+    fetch();
+    setFlag(C, fetched & 0x0001);
+    temp = fetched >> 1;
+    setFlag(Z, (temp & 0x00FF) == 0x0000);
+    setFlag(N, temp & 0x0080);
+    if (instructions[opcode].addressing_mode == &NES6502::IMP)
+        A = temp & 0x00FF;
+    else
+        writeByte(address_abs, temp & 0x00FF);
+    return 0;
+}
+
+uint8_t NES6502::NOP() // No Operation
+{
+    return 1;
+}
+
+uint8_t NES6502::ORA() // Logical Inclusive OR
+{
+    fetch();
+    A = A | fetched;
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x80);
+    return 1;
+}
+
+uint8_t NES6502::PHA() // Push Accumulator
+{
+    writeByte(0x0100 + stkp, A);
+    stkp --;
+    return 0;
+}
+
 
