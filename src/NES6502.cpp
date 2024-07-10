@@ -505,7 +505,7 @@ uint8_t NES6502::NOP() // No Operation
     return 1;
 }
 
-uint8_t NES6502::ORA() // Logical Inclusive OR
+uint8_t NES6502::ORA() // Logical OR Memory with Accumulator
 {
     fetch();
     A = A | fetched;
@@ -514,10 +514,42 @@ uint8_t NES6502::ORA() // Logical Inclusive OR
     return 1;
 }
 
-uint8_t NES6502::PHA() // Push Accumulator
+uint8_t NES6502::PHA() // Push Accumulator on Stack
 {
     writeByte(0x0100 + stkp, A);
     stkp --;
+    return 0;
+}
+
+uint8_t NES6502::PHP() // Push Processor Status on Stack
+{
+    writeByte(0x0100 + stkp, status | B | U);
+    setFlag(B, 0);
+    setFlag(U, 0);
+    stkp --;
+    return 0;
+}
+
+uint8_t NES6502::PLA() // Pull Accumulator from Stack
+{
+    stkp ++;
+    A = readByte(0x0100 + stkp);
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::PLP() // Pull Processor Status from Stack
+{
+    stkp ++;
+    status = readByte(0x0100 + stkp);
+    setFlag(B, 1); // not sure
+    setFlag(U, 1);
+    return 0;
+}
+
+uint8_t NES6502::ROL() // Rotate One Bit Left (Memory or Accumulator)
+{
     return 0;
 }
 
