@@ -550,6 +550,51 @@ uint8_t NES6502::PLP() // Pull Processor Status from Stack
 
 uint8_t NES6502::ROL() // Rotate One Bit Left (Memory or Accumulator)
 {
+    fetch();
+    temp = (uint16_t)(fetched << 1) | (uint16_t)getFlag(C);
+    setFlag(C, temp & 0xFF00);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    if (instructions[opcode].addressing_mode == &NES6502::IMP)
+        A = temp & 0x00FF;
+    else
+        writeByte(address_abs, temp & 0x00FF);
+    return 0;
+}
+
+uint8_t NES6502::ROR() // Rotate One Bit Right (Memory or Accumulator)
+{
+    fetch();
+    temp = (uint16_t)(fetched >> 1) | (uint16_t)(getFlag(C) << 7);
+    setFlag(C, temp & 0x01);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    if (instructions[opcode].addressing_mode == &NES6502::IMP)
+        A = temp & 0x00FF;
+    else
+        writeByte(address_abs, temp & 0x00FF);
+    return 0;
+}
+
+uint8_t NES6502::RTI() // Return from Interrupt
+{
+    stkp ++;
+    status = readByte(0x0100 + stkp);
+    status &= ~B;
+    status &= ~U;
+    stkp ++;
+    pc = (uint16_t)readByte(0x0100 + stkp);
+    stkp ++;
+    pc |= (uint16_t)readByte(0x0100 + stkp) << 8;
+    return 0;
+}
+
+uint8_t NES6502::RTS() // Return from Subroutine
+{
+    stkp ++;
+    pc = (uint16_t)readByte(0x0100 + stkp);
+    pc ++;
+    pc |= (uint16_t)readByte(0x0100 + stkp) << 8;
     return 0;
 }
 
