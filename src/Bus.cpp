@@ -5,7 +5,7 @@ Bus::Bus() {
     for (auto &i : RAM) i = 0x00;
 
     // Connect CPU to bus
-    CPU_.ConnectBus(this);
+    CPU.ConnectBus(this);
 }
 
 Bus::~Bus() {

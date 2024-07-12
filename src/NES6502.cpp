@@ -598,4 +598,102 @@ uint8_t NES6502::RTS() // Return from Subroutine
     return 0;
 }
 
+uint8_t NES6502::SBC() // Subtract Memory from Accumulator with Borrow
+{
+    fetch();
+    uint16_t val = (uint16_t)fetched ^ 0x00FF;
+    temp = (uint16_t)A + (uint16_t)fetched + (uint16_t)getFlag(C);
+    setFlag(C, temp & 0xFF00);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(V, (temp ^ (uint16_t)A) & (temp ^ val) & 0x0080);
+    setFlag(N, temp & 0x0080);
+    A = temp & 0x00FF;
+    return 1;
+}
 
+uint8_t NES6502::SEC() // Set Carry Flag
+{
+    setFlag(C, 1);
+    return 0;
+}
+
+uint8_t NES6502::SED() // Set Decimal Flag
+{
+    setFlag(D, 1);
+    return 0;
+}
+
+uint8_t NES6502::SEI() // Set Interrupt Disable Status
+{
+    setFlag(I, 1);
+    return 0;
+}
+
+uint8_t NES6502::STA() // Store Accumulator in Memory
+{
+    writeByte(address_abs, A);
+    return 0;
+}
+
+uint8_t NES6502::STX() // Store Index X in Memory
+{
+    writeByte(address_abs, X);
+    return 0;
+}
+
+uint8_t NES6502::STY() // Store Index Y in Memory
+{
+    writeByte(address_abs, Y);
+    return 0;
+}
+
+uint8_t NES6502::TAX() // Transfer Accumulator to Index X
+{
+    X = A;
+    setFlag(Z, X == 0);
+    setFlag(N, X & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::TAY() // Transfer Accumulator to Index Y
+{
+    Y = A;
+    setFlag(Z, Y == 0);
+    setFlag(N, Y & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::TSX() // Transfer Stack Pointer to Index X
+{
+    X = stkp;
+    setFlag(Z, X == 0);
+    setFlag(N, X & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::TXA() // Transfer Index X to Accumulator
+{
+    A = X;
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::TXS() // Transfer Index X to Stack Register
+{
+    stkp = X;
+    return 0;
+}
+
+uint8_t NES6502::TYA() // Transfer Index Y to Stack Register
+{
+    A = Y;
+    setFlag(Z, A == 0);
+    setFlag(N, A & 0x80);
+    return 0;
+}
+
+uint8_t NES6502::ILL() // Illegal opcode
+{
+    return 0;
+}
