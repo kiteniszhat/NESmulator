@@ -697,3 +697,59 @@ uint8_t NES6502::ILL() // Illegal opcode
 {
     return 0;
 }
+
+void NES6502::rst()
+{
+    A = 0;
+    X = 0;
+    Y = 0;
+    stkp = 0xFD;
+    status = 0 | U;
+    address_abs = 0xFFFC;
+    uint16_t lowByte = readByte(address_abs);
+    uint16_t highByte = readByte(address_abs + 1);
+    pc = (highByte << 8) | lowByte;
+    address_rel = 0;
+    address_abs = 0;
+    fetched = 0;
+    cycles = 8;
+}
+
+void NES6502::irq()
+{
+    if (getFlag(I) == 0)
+    {
+        writeByte(0x0100 + stkp, (pc >> 8) & 0x00FF);
+        stkp --;
+        writeByte(0x0100 + stkp, pc & 0x00FF);
+        stkp --;
+        setFlag(B, 0);
+        setFlag(U, 1);
+        setFlag(I, 1);
+        writeByte(0x0100 + stkp, status);
+        stkp --;
+        address_abs = 0xFFFE;
+        uint16_t lowByte = readByte(address_abs);
+        uint16_t highByte = readByte(address_abs + 1);
+        pc = (highByte << 8) | lowByte;
+        cycles = 7;
+    }
+}
+
+void NES6502::nmi()
+{
+    writeByte(0x0100 + stkp, (pc >> 8) & 0x00FF);
+    stkp --;
+    writeByte(0x0100 + stkp, pc & 0x00FF);
+    stkp --;
+    setFlag(B, 0);
+    setFlag(U, 1);
+    setFlag(I, 1);
+    writeByte(0x0100 + stkp, status);
+    stkp --;
+    address_abs = 0xFFFA;
+    uint16_t lowByte = readByte(address_abs);
+    uint16_t highByte = readByte(address_abs + 1);
+    pc = (highByte << 8) | lowByte;
+    cycles = 8;
+}
