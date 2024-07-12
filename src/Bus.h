@@ -1,9 +1,10 @@
-#ifndef NESMULATOR_BUS_H
-#define NESMULATOR_BUS_H
+#pragma once
 
 #include <cstdint>
 #include <array>
 #include "NES6502.h"
+
+class NES6502;
 
 class Bus
 {
@@ -20,5 +21,3 @@ public:
     uint8_t readByte(uint16_t address, bool readOnly = false);
 };
 
-
-#endif //NESMULATOR_BUS_H
